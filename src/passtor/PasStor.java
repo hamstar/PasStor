@@ -1,15 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package passtor;
 import java.util.ArrayList;
 import java.io.*;
 
 /**
- *
- * @author chumba
+ * PasStor the password storage
+ * @author Robert McLeod
+ * @since 11 March 2011
+ * @version Sprint1
  */
 public class PasStor {
 

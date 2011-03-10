@@ -7,8 +7,10 @@ package passtor;
 import java.util.ArrayList;
 
 /**
- *
- * @author chumba
+ * Model for an Entry in the PasStor list
+ * @author Robert McLeod
+ * @since 11 March 2011
+ * @version Sprint1
  */
 public class Entry {
 
