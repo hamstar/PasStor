@@ -11,6 +11,11 @@ import java.io.PrintStream;
 import java.util.Scanner;
 import static org.junit.Assert.*;
 
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.Toolkit;
+
+
 /**
  *
  * @author chumba
@@ -20,11 +25,12 @@ public class MainTest {
     static final String LS = System.getProperty("line.separator");
 
     private Main main;
-    private PasStor passtor;
     private ByteArrayOutputStream outputBuffer;
     private PrintStream out;
     private Scanner in;
     private Entry testEntry;
+    private Entry testEntryAlt;
+    private PasswordList passwordList;
 
     public MainTest() {
     }
@@ -40,17 +46,16 @@ public class MainTest {
     @Before
     public void setUp() {
 	main = new Main();
-	passtor = new PasStor();
 	outputBuffer = new ByteArrayOutputStream();
 	out = new PrintStream(outputBuffer);
 	in = null;
 	testEntry = new Entry("example.com", "Heman82", "password");
+        testEntryAlt = new Entry("example2.com", "Heman82", "password");
     }
 
     @After
     public void tearDown() {
 	main = null;
-	passtor = null;
 	testEntry = null;
 	in = null;
 	out = null;
@@ -71,10 +76,10 @@ public class MainTest {
 
     @Test
     public void testPrompt4UserName() {
-	in = new Scanner(PasStor.GOODUSER + LS);
+	in = new Scanner( "Heman" + LS);
 	main.prompt4UserName( in, out );
 
-	assertEquals( "Please enter your username:"+LS, outputBuffer.toString() );
+	assertEquals( "Please enter your username: ", outputBuffer.toString() );
     }
 
     @Test
@@ -82,7 +87,7 @@ public class MainTest {
 	in = new Scanner("password" + LS);
 	main.prompt4Password( in, out );
 
-	assertEquals("Please enter your password:" + LS, outputBuffer.toString() );
+	assertEquals("Please enter your password: ", outputBuffer.toString() );
     }
 
     private void simulateEntryOfLoginDetails( String username, String password )
@@ -95,41 +100,46 @@ public class MainTest {
     }
 
     private void simulateLogin() {
-	simulateEntryOfLoginDetails( PasStor.GOODUSER, "password" );
-	main.doUserLogin( out, passtor );
+	simulateEntryOfLoginDetails( "Heman", "password" );
+	main.login( out );
+	passwordList = new PasswordList( "Heman" );
+        passwordList.flush();
+        main.setPasswordList(passwordList);
     }
 
+    // AT 1.1
     @Test
     public void testDoUserLogin()
     {
 
-	simulateEntryOfLoginDetails( PasStor.GOODUSER, "password" );
+	simulateEntryOfLoginDetails( "Heman", "password" );
 
 	// make a new output buffer, we only want the latest bit printed
 	outputBuffer.reset();
 
-	main.doUserLogin( out, passtor );
+	main.login( out );
 
-	assertEquals( "Welcome to PasStor, " + PasStor.GOODUSER + LS, outputBuffer.toString() );
+	assertEquals( LS+ "Welcome to PasStor, Heman" + LS, outputBuffer.toString() );
 
     }
 
+    // AT 1.2, 1.3
     @Test
     public void testDoUserLoginBadPassword()
     {
-	simulateEntryOfLoginDetails( PasStor.GOODUSER, "!password" );
+	simulateEntryOfLoginDetails( "Heman", "!password" );
 
 	// make a new output buffer, we only want the latest bit printed
 	outputBuffer.reset();
 
-	main.doUserLogin( out, passtor );
+	main.login( out );
 
-	String prompt = "Sorry, unrecognized user or password" + LS
-		+ "Please enter your username:" + LS;
+	String prompt = LS+"Sorry, unrecognized user or password" + LS;
 
 	assertEquals( prompt, outputBuffer.toString() );
     }
 
+    // AT 2.2
     @Test
     public void testPromptAboutEmptyPasswordList()
     {
@@ -138,85 +148,157 @@ public class MainTest {
 	// make a new output buffer, we only want the latest bit printed
 	outputBuffer.reset();
 
-	in = new Scanner( "l" + LS );
-	main.commandPrompt( in, out, passtor );
+        main.displayPasswordList(out);
 
-	assertEquals( "Enter command: No passwords have been entered yet!" + LS, outputBuffer.toString() );
+	assertEquals( LS +"No passwords have been entered yet!" + LS+LS, outputBuffer.toString() );
     }
 
+
+    // AT 2.1
     @Test
     public void testPrintPasswordEntries()
     {
 	simulateLogin();
 
 	// Add the entry three times
-	passtor.addEntry( testEntry );
-	passtor.addEntry( testEntry );
-	passtor.addEntry( testEntry );
+	passwordList.addEntry( testEntry );
+	passwordList.addEntry( testEntryAlt );
+	passwordList.addEntry( testEntry );
 
 	outputBuffer.reset();
-	in = new Scanner("l" + LS);
-	main.commandPrompt( in, out, passtor );
 
-	String printOut = "Enter command: "
-		+ "Printing passwords for " + passtor.getCurrentUser() + LS
-		+ "0:\texample.com\tHeman82" + LS
-		+ "1:\texample.com\tHeman82" + LS
-		+ "2:\texample.com\tHeman82" + LS;
+        main.displayPasswordList(out);
+
+	String printOut = LS + "Showing password list" + LS+LS
+		+ "1: example.com\t\tHeman82" + LS
+		+ "2: example2.com\t\tHeman82" + LS
+		+ "3: example.com\t\tHeman82" + LS+LS;
 	
 	assertEquals( printOut, outputBuffer.toString() );
     }
 
+    // AT 3.1
     @Test
     public void testViewPassword()
     {
 	simulateLogin();
 
 	// Add the entry three times
-	passtor.addEntry( testEntry );
+	passwordList.addEntry( testEntry );
 
-	in = new Scanner("v0" + LS);
 	outputBuffer.reset();
-	main.commandPrompt( in, out, passtor );
 
-	assertEquals( "Enter command: Password: password" + LS, outputBuffer.toString() );
+        in = new Scanner("1"+LS);
+        main.displayPassword(in, out);
+
+	assertEquals( LS+"View password for which entry?: " +LS
+                +"Password is: password" + LS+LS, outputBuffer.toString() );
     }
 
+    // AT 1.2
     @Test
-    public void testEntryForgottenFieldPromptsUser() {
+    public void testEntryInvalidValueKeepsPrompting() {
 	simulateLogin();
 
 	outputBuffer.reset();
 
-	in = new Scanner("n example.com Heman82" + LS);
-	main.commandPrompt( in, out, passtor );
+	in = new Scanner(LS+" " + LS+LS+"example.com"+LS+" "+LS+LS+"Heman"+LS+" "+LS+LS+"password"+LS);
+	main.addEntryPrompt( in, out );
 
-	assertEquals("Enter command: You forgot to enter a field!" + LS, outputBuffer.toString() );
+        String expectedOutput = LS+"Adding a new password entry..."+LS+LS
+                +"Please enter the website: Please enter the website: Please enter the website: "
+                +"Please enter the user: Please enter the user: Please enter the user: "
+                +"Please enter the password: Please enter the password: Please enter the password: "+LS
+                +"Saved to database" + LS;
+
+	assertEquals( expectedOutput, outputBuffer.toString() );
 
     }
 
+    // AT 4.3
     @Test
     public void testEntryPasswordWithSpaces() {
 	simulateLogin();
 	outputBuffer.reset();
 
-	in = new Scanner("n example.com Heman82 password and more password"+LS);
-	main.commandPrompt(in, out, passtor);
+	in = new Scanner(LS+"example.com"+LS+"Heman82"+LS+"password and more password"+LS);
+	main.addEntryPrompt(in, out);
 
-	assertEquals("Enter command: Entry Saved"+LS, this.outputBuffer.toString() );
+        Entry entry = passwordList.getEntry(1);
+
+	assertEquals("password and more password", entry.getPassword() );
     }
 
+    // AT 4.1
     @Test
     public void testEntrySavedSuccessfully() {
 	simulateLogin();
 
 	outputBuffer.reset();
 
-	in = new Scanner("n example.com Heman82 password" +LS);
-	main.commandPrompt(in, out, passtor);
+	in = new Scanner(LS+testEntry.getWebsite()+LS+testEntry.getUserName()+LS+testEntry.getPassword()+LS);
+	main.addEntryPrompt(in, out);
 
-	assertEquals("Enter command: Entry Saved"+LS, this.outputBuffer.toString() );
+        Entry entry = passwordList.getEntry(1);
+
+	assertTrue( entry.equals(testEntry) );
 	
     }
 
+    // AT 5.1
+    @Test
+    public void testCopyToClipboard() {
+
+        simulateLogin();
+
+        passwordList.addEntry( testEntry );
+
+        outputBuffer.reset();
+
+        in = new Scanner("1"+LS);
+        main.copyPasswordToClipboard(in, out);
+
+        String clipboardPassword = null;
+        try {
+            Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+            if (t != null && t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                clipboardPassword = (String) t.getTransferData(DataFlavor.stringFlavor);
+            }
+        } catch( Exception e ) {
+            System.out.println( e.toString() );
+            clipboardPassword = e.toString();
+        }
+
+        assertEquals( testEntry.getPassword(), clipboardPassword);
+
+    }
+
+    // AT 5.2
+    @Test
+    public void testUserCanExit() {
+	simulateLogin();
+
+	outputBuffer.reset();
+
+	main.quit(out);
+
+	assertEquals("Quitting..."+LS, outputBuffer.toString() );
+    }
+
+    // AT 5.3
+    @Test
+    public void testUserCanDeleteEntry() {
+
+	simulateLogin();
+
+        passwordList.addEntry( testEntry );
+
+        outputBuffer.reset();
+
+        in = new Scanner("1"+LS);
+        main.deleteEntryPrompt( in, out );
+
+	assertEquals(LS+"Delete which entry: "+LS+"Entry was deleted"+LS, outputBuffer.toString() );
+
+    }
 }

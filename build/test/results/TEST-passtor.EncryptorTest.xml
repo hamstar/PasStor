@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite errors="4" failures="2" hostname="serj" name="passtor.MainTest" tests="11" time="1.055" timestamp="2011-04-12T08:51:18">
+<testsuite errors="0" failures="0" hostname="serj" name="passtor.EncryptorTest" tests="4" time="0.245" timestamp="2011-04-12T08:51:14">
   <properties>
     <property name="libs.jsp-compiler.javadoc" value="" />
     <property name="netbeans.autoupdate.country" value="NZ" />
@@ -426,59 +426,10 @@
     <property name="platform.active" value="default_platform" />
     <property name="awt.toolkit" value="sun.awt.windows.WToolkit" />
   </properties>
-  <testcase classname="passtor.MainTest" name="testPrompt4UserName" time="0.03" />
-  <testcase classname="passtor.MainTest" name="testPrompt4Password" time="0.0010" />
-  <testcase classname="passtor.MainTest" name="testDoUserLogin" time="0.0050" />
-  <testcase classname="passtor.MainTest" name="testDoUserLoginBadPassword" time="0.0010" />
-  <testcase classname="passtor.MainTest" name="testPromptAboutEmptyPasswordList" time="0.047">
-    <error message="Entry 1 not found" type="java.lang.IndexOutOfBoundsException">java.lang.IndexOutOfBoundsException: Entry 1 not found
-	at passtor.PasswordList.getEntry(PasswordList.java:82)
-	at passtor.Main.displayPasswordList(Main.java:207)
-	at passtor.MainTest.testPromptAboutEmptyPasswordList(MainTest.java:154)
-</error>
-  </testcase>
-  <testcase classname="passtor.MainTest" name="testPrintPasswordEntries" time="0.108">
-    <error message="Entry 1 not found" type="java.lang.IndexOutOfBoundsException">java.lang.IndexOutOfBoundsException: Entry 1 not found
-	at passtor.PasswordList.getEntry(PasswordList.java:82)
-	at passtor.Main.displayPasswordList(Main.java:207)
-	at passtor.MainTest.testPrintPasswordEntries(MainTest.java:173)
-</error>
-  </testcase>
-  <testcase classname="passtor.MainTest" name="testViewPassword" time="0.045">
-    <failure message="expected:&lt;...for which entry?: 
-[Password is: passwor]d
-
-&gt; but was:&lt;...for which entry?: 
-[Entry 1 not foun]d
-
-&gt;" type="junit.framework.AssertionFailedError">junit.framework.AssertionFailedError: expected:&lt;...for which entry?: 
-[Password is: passwor]d
-
-&gt; but was:&lt;...for which entry?: 
-[Entry 1 not foun]d
-
-&gt;
-	at passtor.MainTest.testViewPassword(MainTest.java:197)
-</failure>
-  </testcase>
-  <testcase classname="passtor.MainTest" name="testEntryInvalidValueKeepsPrompting" time="0.034" />
-  <testcase classname="passtor.MainTest" name="testEntryPasswordWithSpaces" time="0.093">
-    <error message="Entry 1 not found" type="java.lang.IndexOutOfBoundsException">java.lang.IndexOutOfBoundsException: Entry 1 not found
-	at passtor.PasswordList.getEntry(PasswordList.java:82)
-	at passtor.MainTest.testEntryPasswordWithSpaces(MainTest.java:230)
-</error>
-  </testcase>
-  <testcase classname="passtor.MainTest" name="testEntrySavedSuccessfully" time="0.042">
-    <error message="Entry 1 not found" type="java.lang.IndexOutOfBoundsException">java.lang.IndexOutOfBoundsException: Entry 1 not found
-	at passtor.PasswordList.getEntry(PasswordList.java:82)
-	at passtor.MainTest.testEntrySavedSuccessfully(MainTest.java:245)
-</error>
-  </testcase>
-  <testcase classname="passtor.MainTest" name="testCopyToClipboard" time="0.176">
-    <failure message="expected:&lt;[password]&gt; but was:&lt;[fullLines.add( line );]&gt;" type="junit.framework.AssertionFailedError">junit.framework.AssertionFailedError: expected:&lt;[password]&gt; but was:&lt;[fullLines.add( line );]&gt;
-	at passtor.MainTest.testCopyToClipboard(MainTest.java:275)
-</failure>
-  </testcase>
+  <testcase classname="passtor.EncryptorTest" name="testEncrypt" time="0.012" />
+  <testcase classname="passtor.EncryptorTest" name="testDecrypt" time="0.0" />
+  <testcase classname="passtor.EncryptorTest" name="testDecryptWithNewlines" time="0.0010" />
+  <testcase classname="passtor.EncryptorTest" name="testDecryptWithVeryLongString" time="0.0" />
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

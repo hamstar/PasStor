@@ -3,7 +3,10 @@ package passtor;
 
 import java.io.PrintStream;
 import java.util.Scanner;
-import java.util.ArrayList;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.Toolkit;
+
 
 /**
  * Main class
@@ -16,16 +19,68 @@ public class Main {
     private String unauthenticated_user;
     private String unauthenticated_password;
 
+    private String currentUser;
+    private PasswordList passwordList;
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
-	System.out.println("Hello World");
+
+	Scanner input = new Scanner(System.in);
+        PrintStream output = new PrintStream( System.out );
+	Main main = new Main();
+
+	// Prompt for the user to login
+	while ( main.getCurrentUser() == null ) {
+
+            main.prompt4UserName( input, output );
+            main.prompt4Password( input, output );
+            
+	    main.login(output);
+
+        }
+
+	PasswordList passwordList = new PasswordList( main.getCurrentUser() );
+	main.setPasswordList( passwordList );
+	boolean running = true;
+	String cmd = "";
+
+	// Take commands from the user and do stuff
+	while ( running == true )  {
+
+	    cmd = main.commandPrompt(input, output);
+
+	    try {
+		if ( cmd.equals("q") ) {
+		    main.quit( output );
+		    running = false;
+		} else if ( cmd.equals("n")) {
+		    main.addEntryPrompt(input, output);
+		} else if ( cmd.equals("l")) {
+		    main.displayPasswordList(output);
+		} else if ( cmd.equals("d") ) {
+		    main.deleteEntryPrompt( input, output );
+		} else if ( cmd.equals("v") ) {
+		    main.displayPassword(input, output);
+		} else if ( cmd.equals("c") ) {
+		    main.copyPasswordToClipboard( input, output );
+		}
+	    } catch( Exception e ) {
+		output.println("Error: "+e.getMessage());
+		output.println();
+	    }
+
+	}
+
     }
 
     public Main()
     {
+    }
+
+    public void quit( PrintStream out ) {
+	out.println("Quitting...");
     }
 
     /**
@@ -34,20 +89,10 @@ public class Main {
      * @param out
      * @param passtor
      */
-    public void commandPrompt( Scanner in, PrintStream out, PasStor passtor )
+    public String commandPrompt( Scanner in, PrintStream out )
     {
 	out.print("Enter command: ");
-	String cmd = in.next();
-
-	if ( cmd.toLowerCase().equals("l") ) {
-	    printPasswordList( out, passtor );
-	} else if ( cmd.startsWith("v") ) {
-	    int index = Integer.parseInt(cmd.substring(1));
-	    printPasswordForEntry( index, out, passtor );
-	} else if ( cmd.startsWith("n") ) {
-	    addEntry( in, out, passtor);
-	}
-	
+	return in.next();
     }
 
     /**
@@ -57,7 +102,7 @@ public class Main {
      */
     public void prompt4UserName( Scanner in, PrintStream out )
     {
-	out.println("Please enter your username:");
+	out.print("Please enter your username: ");
 	unauthenticated_user = in.next();
     }
 
@@ -67,7 +112,7 @@ public class Main {
      * @param out
      */
     public void prompt4Password( Scanner in, PrintStream out ) {
-	out.println("Please enter your password:");
+	out.print("Please enter your password: ");
 	unauthenticated_password = in.next();
     }
 
@@ -76,93 +121,153 @@ public class Main {
      * @param out
      * @param passtor
      */
-    public void doUserLogin( PrintStream out, PasStor passtor ) {
-	Boolean nogood = false;
+    public void login( PrintStream out ) {
 
-	if ( unauthenticated_user == null && unauthenticated_password == null) {
-	    nogood = true;
-	}
-
-	passtor.UserLogin( unauthenticated_user, unauthenticated_password );
-	if ( !passtor.getCurrentUser().equals( unauthenticated_user ) ) {
-	    nogood = true;
-	}
+	out.println();
+	if ( unauthenticated_user == null && unauthenticated_password == null)
+	    throw new IllegalArgumentException("The user and password cannot be null");
 
 	// Check if the login went well
-	if ( nogood ) {
+	if ( Login.validate( unauthenticated_user, unauthenticated_password ) ) {
+	    this.currentUser = unauthenticated_user;
+	    out.println( "Welcome to PasStor, " + unauthenticated_user ); // access gained
+	} else {
 	    out.println( "Sorry, unrecognized user or password" );
-	    prompt4UserName( new Scanner( passtor.getCurrentUser() ), out ); // sent back to username prompt
-	} else {
-	    out.println( "Welcome to PasStor, " + passtor.getCurrentUser() ); // access gained
 	}
+
     }
 
-    /**
-     * Print the list of password entries but don't show the passwords in
-     * plain text.
-     * @param out
-     * @param passtor
-     */
-    public void printPasswordList( PrintStream out, PasStor passtor )
-    {
-	ArrayList passwordList = passtor.getPasswordList();
+    public String getCurrentUser() {
+	return currentUser;
+    }
 
-	if ( passwordList.isEmpty() ) {
+    public void setPasswordList( PasswordList pl ) {
+
+	this.passwordList = pl;
+    }
+
+    public void addEntryPrompt(Scanner in, PrintStream out) {
+
+	out.println();
+	out.println("Adding a new password entry...");
+	out.println();
+
+	in.nextLine();
+
+        String website = null;
+        String user = null;
+        String password = null;
+
+        while ( website == null || website.trim().isEmpty() ) {
+            out.print("Please enter the website: ");
+            website = in.nextLine();
+        }
+
+        while ( user == null || user.trim().isEmpty() ) {
+            out.print("Please enter the user: ");
+            user = in.nextLine();
+        }
+
+        while ( password == null || password.trim().isEmpty() ) {
+            out.print("Please enter the password: ");
+            password = in.nextLine();
+        }
+
+	out.println();
+	
+	if ( passwordList.addEntry( new Entry( website, user, password ) ) ) {
+	    out.println("Saved to database");
+	} else {
+	    out.println("Sorry, couldn't save that entry");
+	}
+
+    }
+
+    public void deleteEntryPrompt( Scanner in, PrintStream out ) {
+
+	out.println();
+	out.print("Delete which entry: ");
+	int delete = in.nextInt();
+
+	out.println();
+
+	if ( passwordList.deleteEntry(delete) ) {
+
+	    out.println("Entry was deleted");
+	} else {
+
+	    out.println("Sorry, could not delete that entry");
+	}
+
+    }
+
+    public void displayPasswordList( PrintStream out ) {
+
+	if ( passwordList.size() > 0 ) {
+
+	    out.println();
+	    out.println("Showing password list");
+	    out.println();
+
+	    Entry entry;
+	    int count = 0;
+	    while ( count < passwordList.size() ) {
+		count++;
+		entry = passwordList.getEntry( count );
+		out.println( count+": "+entry.getWebsite()+"\t\t"+entry.getUserName() );
+	    }
+
+	    out.println();
+
+	} else {
+
+	    out.println();
 	    out.println("No passwords have been entered yet!");
-	} else {
-	    out.println("Printing passwords for " + passtor.getCurrentUser() );
-	    
-	    for ( int index = 0; index < passwordList.size(); index++ ) {
-		Entry entry = (Entry)passwordList.get(index);
-		out.println( index + ":\t" + entry.getWebsite() + "\t" + entry.getUserName() );
-	    }
+	    out.println();
+
 	}
+    }
+
+    public void displayPassword( Scanner in, PrintStream out ) {
+
+        out.println();
+        out.print("View password for which entry?: ");
+        
+        int index = in.nextInt();
+
+        out.println();
+
+        try {
+            Entry entry = passwordList.getEntry( index );
+            out.println("Password is: " + entry.getPassword() );
+        } catch( Exception e ) {
+            out.println( e.getMessage() );
+        }
+
+        out.println();
 
     }
 
-    /**
-     * Print out the password in plaintext
-     * @param index the entries index in the password list
-     * @param out
-     * @param passtor
-     */
-    public void printPasswordForEntry( int index, PrintStream out, PasStor passtor )
-    {
-	String password = (String)passtor.getEntry( index ).getPassword();
-	out.println("Password: "+password);
-    }
+    public void copyPasswordToClipboard( Scanner in, PrintStream out ) {
 
-    /**
-     * Adds an entry to the database
-     * @param in
-     * @param out
-     * @param passtor
-     */
-    public void addEntry( Scanner in, PrintStream out, PasStor passtor )
-    {
-	ArrayList ArrEntry = new ArrayList();
-	for ( int i = 0; i <= 50; i++ ) {
-	    try {
-		if ( i < 3 ) {
-		    ArrEntry.add( in.next() );
-		} else {
-		    ArrEntry.set( 2, ArrEntry.get(2)+" "+in.next() ); // make sure passwords with spaces are saved
-		}
-	    } catch ( java.util.NoSuchElementException e ) {
-		break;
-	    }
-	}
+        out.println();
+        out.print("Copy which password to clipboard?: ");
+        int index = in.nextInt();
 
-	if ( ArrEntry.size() < 3 ) {
-	    out.println("You forgot to enter a field!");
-	} else if ( ArrEntry.size() == 3 ) {
+        out.println();
 
-	    if ( passtor.addEntry( new Entry( ArrEntry ) ) ) {
-		out.println("Entry Saved");
-	    } else {
-		out.println("Entry not saved");
-	    }
-	}
+        try {
+            Entry entry = passwordList.getEntry(index);
+            StringSelection stringSelection = new StringSelection( entry.getPassword() );
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(stringSelection, null);
+            out.println("Successfully copied to clipboard.");
+        } catch( Exception e ) {
+            out.println( e.getMessage() );
+        }
+
+        out.println();
+
     }
 
 }

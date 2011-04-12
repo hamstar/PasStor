@@ -5,6 +5,7 @@
 
 package passtor;
 import java.util.ArrayList;
+import java.io.*;
 
 /**
  * Model for an Entry in the PasStor list
@@ -22,6 +23,11 @@ public class Entry {
 	
     }
 
+    @Override
+    public String toString() {
+        return website+","+userName+","+password;
+    }
+
     /**
      * Takes an ArrayList of exactly three elements and assigns them to local
      * variables in the order of website, userName, password
@@ -33,6 +39,24 @@ public class Entry {
 	    setWebsite((String)entry.get(0));
 	    setUserName((String)entry.get(1));
 	    setPassword((String)entry.get(2));
+	} else {
+	    System.err.println("Array was given that was not equal to three, empty Entry created");
+	}
+    }
+
+    public Entry( String _entry ) {
+        String[] entry = _entry.split(",");
+        setWebsite(entry[0]);
+        setUserName(entry[1]);
+        setPassword(entry[2]);
+    }
+
+    public Entry(String[] entry)
+    {
+	if ( entry.length == 3 ) {
+	    setWebsite((String)entry[0]);
+	    setUserName((String)entry[1]);
+	    setPassword((String)entry[2]);
 	} else {
 	    System.err.println("Array was given that was not equal to three, empty Entry created");
 	}
@@ -102,6 +126,18 @@ public class Entry {
     public Entry setPassword(String _password) {
 	password = _password;
 	return this;
+    }
+
+    public boolean equals( Entry entry ) {
+	boolean same = false;
+
+	if ( entry.getPassword().equals( getPassword() )
+	    && entry.getUserName().equals( getUserName() )
+	    && entry.getWebsite().equals( getWebsite() ) ) {
+	    same = true;
+	}
+
+	return same;
     }
 
 }
